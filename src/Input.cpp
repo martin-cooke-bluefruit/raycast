@@ -15,6 +15,8 @@ static std::map<Button, bool> isHeld;
 static std::map<Button, bool> wasPressed;
 static std::map<Button, bool> wasReleased;
 
+static std::map<Button, uint8_t> buttonToPin;
+
 static uint32_t debounceDelayUp;
 static uint32_t debounceDelayDown;
 static uint32_t debounceDelayLeft;
@@ -37,6 +39,7 @@ void Input_InitPins(void)
   isHeld.insert(std::pair<Button, bool>(Button::Up, (digitalRead(PIN_UP) == LOW)));
   wasPressed.insert(std::pair<Button, bool>(Button::Up, false));
   wasReleased.insert(std::pair<Button, bool>(Button::Up, false));
+  buttonToPin.insert(std::pair<Button, uint8_t>(Button::Up, PIN_UP));
   debounceDelayUp = 0;
 
   pinMode(PIN_DOWN, INPUT_PULLUP);
@@ -44,6 +47,7 @@ void Input_InitPins(void)
   isHeld.insert(std::pair<Button, bool>(Button::Down, (digitalRead(PIN_DOWN) == LOW)));
   wasPressed.insert(std::pair<Button, bool>(Button::Down, false));
   wasReleased.insert(std::pair<Button, bool>(Button::Down, false));
+  buttonToPin.insert(std::pair<Button, uint8_t>(Button::Down, PIN_DOWN));
   debounceDelayDown = 0;
 
   pinMode(PIN_LEFT, INPUT_PULLUP);
@@ -51,6 +55,7 @@ void Input_InitPins(void)
   isHeld.insert(std::pair<Button, bool>(Button::Left, (digitalRead(PIN_LEFT) == LOW)));
   wasPressed.insert(std::pair<Button, bool>(Button::Left, false));
   wasReleased.insert(std::pair<Button, bool>(Button::Left, false));
+  buttonToPin.insert(std::pair<Button, uint8_t>(Button::Left, PIN_LEFT));
   debounceDelayLeft = 0;
 
   pinMode(PIN_RIGHT, INPUT_PULLUP);
@@ -58,6 +63,7 @@ void Input_InitPins(void)
   isHeld.insert(std::pair<Button, bool>(Button::Right, (digitalRead(PIN_RIGHT) == LOW)));
   wasPressed.insert(std::pair<Button, bool>(Button::Right, false));
   wasReleased.insert(std::pair<Button, bool>(Button::Right, false));
+  buttonToPin.insert(std::pair<Button, uint8_t>(Button::Right, PIN_RIGHT));
   debounceDelayRight = 0;
 
   pinMode(PIN_A, INPUT_PULLUP);
@@ -65,6 +71,7 @@ void Input_InitPins(void)
   isHeld.insert(std::pair<Button, bool>(Button::A, (digitalRead(PIN_A) == LOW)));
   wasPressed.insert(std::pair<Button, bool>(Button::A, false));
   wasReleased.insert(std::pair<Button, bool>(Button::A, false));
+  buttonToPin.insert(std::pair<Button, uint8_t>(Button::A, PIN_A));
   debounceDelayA = 0;
 
   pinMode(PIN_B, INPUT_PULLUP);
@@ -72,6 +79,7 @@ void Input_InitPins(void)
   isHeld.insert(std::pair<Button, bool>(Button::B, (digitalRead(PIN_B) == LOW)));
   wasPressed.insert(std::pair<Button, bool>(Button::B, false));
   wasReleased.insert(std::pair<Button, bool>(Button::B, false));
+  buttonToPin.insert(std::pair<Button, uint8_t>(Button::B, PIN_B));
   debounceDelayB = 0;
 }
 
@@ -90,7 +98,8 @@ for (auto it = wasPressed.begin(); it != wasPressed.end(); ++it)
 
 bool Input_IsHeld(Button button)
 {
-  return isHeld[button];
+  return (digitalRead(buttonToPin[button]) == LOW);
+  //return isHeld[button];
 }
 
 bool Input_WasPressed(Button button)

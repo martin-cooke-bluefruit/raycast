@@ -50,20 +50,24 @@ void Raycaster::UpdateClipPlaneVector(void)
   clipPlaneRightVector.Scale(distanceToClipPlane * tan(fovInRadians / 2.0));
 }
 
-void Raycaster::RenderToBuffer(int width, int height, unsigned char *buffer)
+void Raycaster::RenderToDisplay(DisplayWrapper *display, unsigned char* textureData)
 {
-  const int bufferSize = width * height;
+  const unsigned int displayWidth = display->GetWidth();
+  const unsigned int displayHeight = display->GetHeight();
+  unsigned char *displayBuffer = display->GetBuffer();
+
+  const int bufferSize = displayWidth * displayHeight;
 
   // zero display (i.e. black floor & ceiling)
-  memset(buffer, 0, bufferSize);
+  memset(displayBuffer, 0, bufferSize);
 
-  for (int x = 0; x < width; x++)
+  for (int x = 0; x < displayWidth; x++)
   {
     int mapX = int(cameraPosition.x);
     int mapY = int(cameraPosition.y);
 
     // camera space: -1.0  at left of screen, +1.0 at right
-    double cameraX = 2.0 * x / double(width) - 1;
+    double cameraX = 2.0 * x / double(displayWidth) - 1;
 
     // calculate ray vector: from camera position to intersecting point on clip plane
     Vector2 ray = Vector2(clipPlaneRightVector.x, clipPlaneRightVector.y);
@@ -125,38 +129,69 @@ void Raycaster::RenderToBuffer(int width, int height, unsigned char *buffer)
         hit = true;
     }
 
+    double textureUV_U;
     // (1 - signX) >> 1)  : add 1 only if the sign is -ve
     switch (side)
     {
     case NorthSouth:
       perpendicularWallDistance = (mapX - cameraPosition.x + ((1 - signX) >> 1)) / ray.x;
+      textureUV_U = cameraPosition.y + perpendicularWallDistance * ray.y;
       break;
     case EastWest:
       perpendicularWallDistance = (mapY - cameraPosition.y + ((1 - signY) >> 1)) / ray.y;
+      textureUV_U = cameraPosition.x + perpendicularWallDistance * ray.x;
       break;
     }
+    textureUV_U -= floor(textureUV_U);
 
     if (perpendicularWallDistance > (mapWidth + mapHeight))
       perpendicularWallDistance = mapWidth + mapHeight;
 
-    int lineHeight = (int)height;
-    if (perpendicularWallDistance > 1)
-      lineHeight = (int)(height / perpendicularWallDistance);
+    // int lineHeight = (int)displayHeight;
+    // if (perpendicularWallDistance > 1)
+    //   lineHeight = (int)(displayHeight / perpendicularWallDistance);
+    unsigned int lineHeight = (int)(displayHeight / perpendicularWallDistance);
+
+//    int textureNum = 0;
+    int textureColumn = int(textureUV_U * 32.0); // assumes textures are 32px wide
+
+    // if(side == 0 && rayDirX > 0) texX = texWidth - texX - 1;
+    // if(side == 1 && rayDirY < 0) texX = texWidth - texX - 1;
 
     // picks shades from 100 to 250 (to implement shading later)
-    unsigned char shade = 255; // 100 + (*(worldMap + (mapY * width) + mapX) * 30);
+    double shade = 1.0; // 100 + (*(worldMap + (mapY * displayWidth) + mapX) * 30);
     if (side == EastWest) 
-      shade = 192; // darken north-south walls
+      shade = 0.75; // darken north-south walls
 
-    shade /= perpendicularWallDistance < 1.0 ? 1.0 : perpendicularWallDistance;
+    shade /= (perpendicularWallDistance < 3.0) ? 1.0 : perpendicularWallDistance * 0.333;
 
-    
-    int startPixelY = (height - lineHeight) >> 1;
-    for (int y = startPixelY; y < startPixelY + lineHeight; y++)
+    int startPixelY = (displayHeight - lineHeight);
+    if (startPixelY < 0)
+      startPixelY = 0;
+    startPixelY >>= 1;
+    int endPixelY = 63 - startPixelY;
+
+    double textureRow;
+    double textureRowStep;
+    if (lineHeight < displayHeight)
     {
-      int offset = (y << 7) + x; // (y >> 7) assuming width = 128 !!
+      textureRow = 0;
+      textureRowStep = 32.0 / (double)(endPixelY - startPixelY);
+    }
+    else
+    {
+      const double amountVisible = ((double)displayHeight / (double)lineHeight);
+      textureRow = 32.0 * (1.0 - amountVisible) / 2.0;
+      textureRowStep = (32.0 * amountVisible) / 64.0;
+    }
+
+    for (int y = startPixelY; y <= endPixelY; y++)
+    {
+      unsigned char texel = *(textureData + ((int)(textureRow) << 5) + textureColumn);
+      textureRow += textureRowStep;
+      int offset = (y << 7) + x; // (y >> 7) assuming displayWidth = 128 !!
       if (offset < bufferSize)
-      *(buffer + offset) = shade;
+      *(displayBuffer + offset) = texel * shade;
     }
   }
 }

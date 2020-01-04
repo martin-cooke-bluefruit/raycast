@@ -2,6 +2,7 @@
 #define RAYCASTER_HPP
 
 #include "Vector2.hpp"
+#include "DisplayWrapper.hpp"
 
 class Raycaster
 {
@@ -17,7 +18,7 @@ public:
   void SetCameraDirection(double angleInRadians);
   void SetFOVInRadians(double fovInRadians);
   void SetClipPlaneDistance(double distance);
-  void RenderToBuffer(int width, int height, unsigned char *buffer);
+  void RenderToDisplay(DisplayWrapper *display, unsigned char* textureData);
 
 private:
   Vector2 cameraPosition;
