@@ -53,6 +53,7 @@ void Raycaster::UpdateClipPlaneVector(void)
 void Raycaster::RenderToBuffer(int width, int height, unsigned char *buffer)
 {
   const int bufferSize = width * height;
+
   // zero display (i.e. black floor & ceiling)
   memset(buffer, 0, bufferSize);
 
@@ -146,6 +147,9 @@ void Raycaster::RenderToBuffer(int width, int height, unsigned char *buffer)
     unsigned char shade = 255; // 100 + (*(worldMap + (mapY * width) + mapX) * 30);
     if (side == EastWest) 
       shade = 192; // darken north-south walls
+
+    shade /= perpendicularWallDistance < 1.0 ? 1.0 : perpendicularWallDistance;
+
     
     int startPixelY = (height - lineHeight) >> 1;
     for (int y = startPixelY; y < startPixelY + lineHeight; y++)
