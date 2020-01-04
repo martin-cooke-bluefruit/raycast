@@ -8,6 +8,9 @@ Raycaster::Raycaster(int mapWidth, int mapHeight, int *worldMap)
   this->mapWidth = mapWidth;
   this->mapHeight = mapHeight;
   this->worldMap = worldMap;
+
+  fovInRadians = M_PI / 3.0;
+  distanceToClipPlane = 1.0;
 }
 
 void Raycaster::SetCameraPosition(Vector2 position)
@@ -17,7 +20,8 @@ void Raycaster::SetCameraPosition(Vector2 position)
 
 void Raycaster::SetCameraDirection(Vector2 direction)
 {
-  cameraDirection = direction;
+  cameraDirection.CloneFrom(direction);
+  cameraDirection.Normalise();
   UpdateClipPlaneVector();
 }
 
@@ -29,10 +33,28 @@ void Raycaster::SetCameraDirection(double angleInRadians)
   UpdateClipPlaneVector();
 }
 
+void Raycaster::SetFOVInRadians(double fovInRadians)
+{
+  this->fovInRadians = fovInRadians;
+}
+
+void Raycaster::SetClipPlaneDistance(double distance)
+{
+  distanceToClipPlane = distance;
+}
+
+void Raycaster::UpdateClipPlaneVector(void)
+{
+  clipPlaneRightVector.x = cameraDirection.y;
+  clipPlaneRightVector.y = -cameraDirection.x;
+  clipPlaneRightVector.Scale(distanceToClipPlane * tan(fovInRadians / 2.0));
+}
+
 void Raycaster::RenderToBuffer(int width, int height, unsigned char *buffer)
 {
-  // clear display
-  memset(buffer, 0, width * height);
+  const int bufferSize = width * height;
+  // zero display (i.e. black floor & ceiling)
+  memset(buffer, 0, bufferSize);
 
   for (int x = 0; x < width; x++)
   {
@@ -45,7 +67,10 @@ void Raycaster::RenderToBuffer(int width, int height, unsigned char *buffer)
     // calculate ray vector: from camera position to intersecting point on clip plane
     Vector2 ray = Vector2(clipPlaneRightVector.x, clipPlaneRightVector.y);
     ray.Scale(cameraX);
-    ray.Add(cameraDirection);
+    Vector2 vectorToClipPlanceCentre;
+    vectorToClipPlanceCentre.CloneFrom(cameraDirection);
+    vectorToClipPlanceCentre.Scale(distanceToClipPlane);
+    ray.Add(vectorToClipPlanceCentre);
 
     double lengthOfRayToNextXBoundary;
     double lengthOfRayToNextYBoundary;
@@ -57,7 +82,7 @@ void Raycaster::RenderToBuffer(int width, int height, unsigned char *buffer)
     int signX;
     int signY;
 
-    int hit = 0;
+    bool hit = false;
     Side side;
 
     if (ray.x < 0)
@@ -81,7 +106,7 @@ void Raycaster::RenderToBuffer(int width, int height, unsigned char *buffer)
       lengthOfRayToNextYBoundary = (mapY + 1.0 - cameraPosition.y) * lengthOfRayToCrossOneGridHeight;
     }
 
-    while (hit == 0)
+    while (!hit)
     {
       if (lengthOfRayToNextXBoundary < lengthOfRayToNextYBoundary)
       {
@@ -95,8 +120,8 @@ void Raycaster::RenderToBuffer(int width, int height, unsigned char *buffer)
         mapY += signY;
         side = EastWest;
       }
-      if (*(worldMap + (mapY * width) + mapX) > 0)
-        hit = 1;
+      if (IsWallAtMapPosition(mapX, mapY))
+        hit = true;
     }
 
     // (1 - signX) >> 1)  : add 1 only if the sign is -ve
@@ -120,17 +145,23 @@ void Raycaster::RenderToBuffer(int width, int height, unsigned char *buffer)
     // picks shades from 100 to 250 (to implement shading later)
     unsigned char shade = 255; // 100 + (*(worldMap + (mapY * width) + mapX) * 30);
     if (side == EastWest) 
-      shade = 200; // darken north-south walls
-
+      shade = 192; // darken north-south walls
+    
     int startPixelY = (height - lineHeight) >> 1;
     for (int y = startPixelY; y < startPixelY + lineHeight; y++)
-      *(buffer + (y << 7) + x) = shade; // (y >> 7) assuming width = 128 !!
+    {
+      int offset = (y << 7) + x; // (y >> 7) assuming width = 128 !!
+      if (offset < bufferSize)
+      *(buffer + offset) = shade;
+    }
   }
 }
 
-void Raycaster::UpdateClipPlaneVector(void)
+bool Raycaster::IsWallAtMapPosition(int xPos, int yPos)
 {
-  clipPlaneRightVector.x = cameraDirection.y;
-  clipPlaneRightVector.y = -cameraDirection.x;
-  clipPlaneRightVector.Scale(0.66);
+  if (xPos < 0 || xPos >= mapWidth || yPos < 0 || yPos >= mapHeight)
+    return true;
+
+  return (*(worldMap + (yPos * mapWidth) + xPos) > 0);
 }
+
