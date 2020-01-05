@@ -3,6 +3,9 @@
 #include <cmath>
 #include <string.h>
 
+#include "TextureManager.hpp"
+
+
 Raycaster::Raycaster(int mapWidth, int mapHeight, int *worldMap)
 {
   this->mapWidth = mapWidth;
@@ -50,7 +53,7 @@ void Raycaster::UpdateClipPlaneVector(void)
   clipPlaneRightVector.Scale(distanceToClipPlane * tan(fovInRadians / 2.0));
 }
 
-void Raycaster::RenderToDisplay(DisplayWrapper *display, unsigned char* textureData)
+void Raycaster::RenderToDisplay(DisplayWrapper *display)
 {
   const unsigned int displayWidth = display->GetWidth();
   const unsigned int displayHeight = display->GetHeight();
@@ -61,7 +64,7 @@ void Raycaster::RenderToDisplay(DisplayWrapper *display, unsigned char* textureD
   // zero display (i.e. black floor & ceiling)
   memset(displayBuffer, 0, bufferSize);
 
-  for (int x = 0; x < displayWidth; x++)
+  for (unsigned int x = 0; x < displayWidth; x++)
   {
     int mapX = int(cameraPosition.x);
     int mapY = int(cameraPosition.y);
@@ -125,7 +128,7 @@ void Raycaster::RenderToDisplay(DisplayWrapper *display, unsigned char* textureD
         mapY += signY;
         side = EastWest;
       }
-      if (IsWallAtMapPosition(mapX, mapY))
+      if (WallAtMapPosition(mapX, mapY))
         hit = true;
     }
 
@@ -187,7 +190,7 @@ void Raycaster::RenderToDisplay(DisplayWrapper *display, unsigned char* textureD
 
     for (int y = startPixelY; y <= endPixelY; y++)
     {
-      unsigned char texel = *(textureData + ((int)(textureRow) << 5) + textureColumn);
+      unsigned char texel = *(textures[WallAtMapPosition(mapX, mapY)] + ((int)(textureRow) << 5) + textureColumn);
       textureRow += textureRowStep;
       int offset = (y << 7) + x; // (y >> 7) assuming displayWidth = 128 !!
       if (offset < bufferSize)
@@ -196,11 +199,12 @@ void Raycaster::RenderToDisplay(DisplayWrapper *display, unsigned char* textureD
   }
 }
 
-bool Raycaster::IsWallAtMapPosition(int xPos, int yPos)
+unsigned char Raycaster::WallAtMapPosition(int xPos, int yPos)
 {
+  xPos = mapWidth - 1 - xPos;
   if (xPos < 0 || xPos >= mapWidth || yPos < 0 || yPos >= mapHeight)
     return true;
 
-  return (*(worldMap + (yPos * mapWidth) + xPos) > 0);
+  return *(worldMap + (yPos * mapWidth) + xPos);
 }
 

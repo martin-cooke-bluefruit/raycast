@@ -18,7 +18,7 @@ public:
   void SetCameraDirection(double angleInRadians);
   void SetFOVInRadians(double fovInRadians);
   void SetClipPlaneDistance(double distance);
-  void RenderToDisplay(DisplayWrapper *display, unsigned char* textureData);
+  void RenderToDisplay(DisplayWrapper *display);
 
 private:
   Vector2 cameraPosition;
@@ -28,7 +28,7 @@ private:
   double distanceToClipPlane;
 
   void UpdateClipPlaneVector(void);
-  bool IsWallAtMapPosition(int xPos, int yPos);
+  unsigned char WallAtMapPosition(int xPos, int yPos);
 
   enum Side {
     NorthSouth,
