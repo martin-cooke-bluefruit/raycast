@@ -67,9 +67,14 @@ void DisplayWrapper::Render(bool dither)
 
       if (dither)
       {
-        double ditherError;
+        bool negate = false;
+
+        unsigned char ditherError;
         if (pixelValue >= 128)
-          ditherError = pixelValue - 255;
+        {
+          ditherError = 255 - pixelValue;
+          negate = true;
+        }
         else
           ditherError = pixelValue;
 
@@ -78,16 +83,16 @@ void DisplayWrapper::Render(bool dither)
         
         // Floyd-Steinberg dithering
         if (x + 1 < DISPLAY_WIDTH)
-          ApplyDither(displayBuffer,   (y << 7) + x + 1,       (int)((ditherError * 7) / 16.0));
+          ApplyDither(displayBuffer,   (y << 7) + x + 1,       ((ditherError << 3) - ditherError) >> 4, negate); // ((d * 8) - d) / 16  =  7d / 16
         if (y + 1 < DISPLAY_HEIGHT)
         {
           if (x - 1 >= 0)
-            ApplyDither(displayBuffer, ((y + 1) << 7) + x - 1, (int)((ditherError * 3) / 16.0));
+            ApplyDither(displayBuffer, ((y + 1) << 7) + x - 1, ((ditherError << 2) - ditherError) >> 4, negate); // ((d * 4) - d) / 16  =  3d / 16
 
-            ApplyDither(displayBuffer, ((y + 1) << 7) + x,     (int)((ditherError * 5) / 16.0));
+            ApplyDither(displayBuffer, ((y + 1) << 7) + x,     ((ditherError << 2) + ditherError) >> 4, negate); // ((d * 4) + d) / 16  =  5d / 16
 
           if (x + 1 < DISPLAY_WIDTH)
-            ApplyDither(displayBuffer, ((y + 1) << 7) + x + 1, (int)((ditherError)     / 16.0));
+            ApplyDither(displayBuffer, ((y + 1) << 7) + x + 1, ditherError >> 4, negate);                        //                     =   d / 16
         }
       }
     }
@@ -95,17 +100,25 @@ void DisplayWrapper::Render(bool dither)
   u8g2.sendBuffer();
 }
 
-void DisplayWrapper::ApplyDither(unsigned char *buffer, uint16_t offset, int error)
+void DisplayWrapper::ApplyDither(unsigned char *buffer, const uint16_t offset, const unsigned char error, const bool negate)
 {
   if (offset >= bufferSize)
     return;
   
   unsigned char oldPixel = *(buffer + offset);
-  unsigned char newPixel = (oldPixel + (char)error);
-  if ((error < 0) && (newPixel > oldPixel))
-    newPixel = 0;
-  else if ((error > 0) && (newPixel < oldPixel))
-    newPixel = 255;
+  unsigned char newPixel;
+  if (negate)
+  {
+    newPixel = oldPixel - error;
+    if (newPixel > oldPixel)
+      newPixel = 0;
+  }
+  else
+  {
+    newPixel = oldPixel + error;
+    if (newPixel < oldPixel)
+      newPixel = 255;
+  }
 
   *(buffer + offset) = newPixel;
   return;

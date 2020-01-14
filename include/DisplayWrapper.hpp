@@ -19,7 +19,7 @@ private:
   unsigned char *displayBuffer;
   int bufferSize;
 
-  void ApplyDither(unsigned char *buffer, uint16_t offset, int error);
+  void ApplyDither(unsigned char *buffer, const uint16_t offset, const unsigned char error, const bool negate);
 };
 
 #endif

@@ -200,7 +200,7 @@ void Raycaster::RenderToDisplay(DisplayWrapper *display, int fps)
 
   if (fps > 0)
   {
-    for (int x = 0; x < 25; x++)
+    for (int x = 0; x < 30; x++)
     {
       if (x % 5 == 4)
         *(displayBuffer + x) = 255;
