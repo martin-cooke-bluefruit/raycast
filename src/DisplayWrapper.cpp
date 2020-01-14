@@ -1,5 +1,4 @@
 #include "DisplayWrapper.hpp"
-
 #include <U8g2lib.h>
 #include <string.h>
 

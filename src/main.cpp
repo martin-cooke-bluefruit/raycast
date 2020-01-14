@@ -100,10 +100,14 @@ void UpdateGame(double deltaTime)
     WalkForward(WALK_SPEED * deltaTime);
   if (Input_IsHeld(Button::Down))
     WalkBackward(WALK_SPEED * deltaTime);
-  if (Input_IsHeld(Button::A))
-    StrafeLeft(WALK_SPEED * deltaTime);
-  if (Input_IsHeld(Button::B))
-    StrafeRight(WALK_SPEED * deltaTime);
+  if (Input_WasPressed(Button::A))
+    tone(22, 440, 250);
+  if (Input_WasPressed(Button::B))
+    tone(22, 330, 250);
+  // if (Input_IsHeld(Button::A))
+  //   StrafeLeft(WALK_SPEED * deltaTime);
+  // if (Input_IsHeld(Button::B))
+  //   StrafeRight(WALK_SPEED * deltaTime);
   if (Input_IsHeld(Button::Left))
     TurnLeft(TURN_SPEED * deltaTime);
   if (Input_IsHeld(Button::Right))
