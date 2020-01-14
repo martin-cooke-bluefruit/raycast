@@ -53,7 +53,7 @@ void Raycaster::UpdateClipPlaneVector(void)
   clipPlaneRightVector.Scale(distanceToClipPlane * tan(fovInRadians / 2.0));
 }
 
-void Raycaster::RenderToDisplay(DisplayWrapper *display)
+void Raycaster::RenderToDisplay(DisplayWrapper *display, int fps)
 {
   const unsigned int displayWidth = display->GetWidth();
   const unsigned int displayHeight = display->GetHeight();
@@ -195,6 +195,22 @@ void Raycaster::RenderToDisplay(DisplayWrapper *display)
       int offset = (y << 7) + x; // (y >> 7) assuming displayWidth = 128 !!
       if (offset < bufferSize)
       *(displayBuffer + offset) = texel * shade;
+    }
+  }
+
+  if (fps > 0)
+  {
+    for (int x = 0; x < 25; x++)
+    {
+      if (x % 5 == 4)
+        *(displayBuffer + x) = 255;
+      else
+        *(displayBuffer + x) = 0;
+
+      if (x < fps)
+        *(displayBuffer + 128 + x) = 255;
+      else
+        *(displayBuffer + 128 + x) = 0;
     }
   }
 }

@@ -2,10 +2,10 @@
 
 #include <Arduino.h>
 
-#define PIN_UP     9
-#define PIN_DOWN  10
-#define PIN_LEFT  11
-#define PIN_RIGHT 12
+#define PIN_UP    17
+#define PIN_DOWN  18
+#define PIN_LEFT  16
+#define PIN_RIGHT 15
 #define PIN_A      1
 #define PIN_B      0
 

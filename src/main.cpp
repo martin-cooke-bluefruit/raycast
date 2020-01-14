@@ -4,6 +4,7 @@
 #include "Vector2.hpp"
 #include "Raycaster.hpp"
 #include "Input.hpp"
+#include <SPI.h>
 
 #define ANALOG_PIN_1 15
 
@@ -50,7 +51,7 @@ Raycaster *raycaster;
 
 static uint32_t time;
 
-void UpdateGame(void);
+void UpdateGame(double deltaTime);
 
 void WalkForward(double distance);
 void WalkBackward(double distance);
@@ -61,6 +62,7 @@ void TurnRight(double radians);
 
 void setup()
 {
+  SPI.setSCK(14);
   display = new DisplayWrapper();
 
   Serial.begin(9600);
@@ -81,37 +83,38 @@ void setup()
   playerDirection.Normalise();
 }
 
-void loop() 
+void loop()
 {
-  UpdateGame();
+  const uint32_t currentTime = millis();
+  const double deltaTime = (currentTime - time) / 1000.0;
+  time = currentTime;
+
+  UpdateGame(deltaTime);
   Input_Clear();
   display->Render(true); // dithering parameter
 }
 
-void UpdateGame()
+void UpdateGame(double deltaTime)
 {
-  uint32_t currentTime = millis();
-  double delatTime = (currentTime - time) / 1000.0;
-  time = currentTime;
-
   if (Input_IsHeld(Button::Up))
-    WalkForward(WALK_SPEED * delatTime);
+    WalkForward(WALK_SPEED * deltaTime);
   if (Input_IsHeld(Button::Down))
-    WalkBackward(WALK_SPEED * delatTime);
-  // if (Input_IsHeld(Button::A))
-  //   StrafeLeft(WALK_SPEED * delatTime);
-  // if (Input_IsHeld(Button::B))
-  //   StrafeRight(WALK_SPEED * delatTime);
+    WalkBackward(WALK_SPEED * deltaTime);
+  if (Input_IsHeld(Button::A))
+    StrafeLeft(WALK_SPEED * deltaTime);
+  if (Input_IsHeld(Button::B))
+    StrafeRight(WALK_SPEED * deltaTime);
   if (Input_IsHeld(Button::Left))
-    TurnLeft(TURN_SPEED * delatTime);
+    TurnLeft(TURN_SPEED * deltaTime);
   if (Input_IsHeld(Button::Right))
-    TurnRight(TURN_SPEED * delatTime);
+    TurnRight(TURN_SPEED * deltaTime);
 
+  const int fps = 1.0 / deltaTime;
   display->Clear();
 
   raycaster->SetCameraPosition(playerPosition);
   raycaster->SetCameraDirection(playerDirection);
-  raycaster->RenderToDisplay(display);
+  raycaster->RenderToDisplay(display, fps);
 }
 
 void WalkForward(double distance)

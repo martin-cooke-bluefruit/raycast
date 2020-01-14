@@ -9,7 +9,8 @@
 // 128 * 8
 #define OLED_BUFFER_SIZE 1024
 
-static U8G2_SSD1309_128X64_NONAME0_F_4W_SW_SPI u8g2(U8G2_R0, /* clock=*/ 23, /* data=*/ 22, /* cs=*/ 19, /* dc=*/ 20, /* reset=*/ 21);
+//static U8G2_SSD1309_128X64_NONAME0_F_4W_SW_SPI u8g2(U8G2_R0, /* clock=*/ 14, /* data=*/ 11, /* cs=*/ 10, /* dc=*/ 9, /* reset=*/ 8);
+static U8G2_SSD1309_128X64_NONAME0_F_4W_HW_SPI u8g2(U8G2_R0, /* cs=*/ 10, /* dc=*/ 9, /* reset=*/ 8);
 
 DisplayWrapper::DisplayWrapper(void)
 {
