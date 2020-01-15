@@ -184,17 +184,19 @@ void Raycaster::RenderToDisplay(DisplayWrapper *display, int fps)
     else
     {
       const double amountVisible = ((double)displayHeight / (double)lineHeight);
-      textureRow = 32.0 * (1.0 - amountVisible) / 2.0;
-      textureRowStep = (32.0 * amountVisible) / 64.0;
+      textureRow = 16.0 * (1.0 - amountVisible); // 32.0 * (1.0 - amountVisible) / 2.0;
+      textureRowStep = amountVisible / 2.0; //(32.0 * amountVisible) / 64.0;
     }
 
     for (int y = startPixelY; y <= endPixelY; y++)
     {
-      unsigned char texel = *(textures[WallAtMapPosition(mapX, mapY)] + ((int)(textureRow) << 5) + textureColumn);
+      // to do: change textureRow & textureStep to unsigned char; using '>> 3' can represent 1/8th steps over 32 pixels
+      const unsigned char texel = *(textures[WallAtMapPosition(mapX, mapY)] + ((int)(textureRow) << 5) + textureColumn);
       textureRow += textureRowStep;
-      int offset = (y << 7) + x; // (y >> 7) assuming displayWidth = 128 !!
-      if (offset < bufferSize)
+      const int offset = (y << 7) + x; // (y >> 7) assuming displayWidth = 128 !!
+      //if (offset < bufferSize)
       *(displayBuffer + offset) = texel * shade;
+      // to do: replace '* shade' with a 
     }
   }
 
