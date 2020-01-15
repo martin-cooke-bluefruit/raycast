@@ -18,7 +18,7 @@ public:
   void SetCameraDirection(double angleInRadians);
   void SetFOVInRadians(double fovInRadians);
   void SetClipPlaneDistance(double distance);
-  void RenderToDisplay(DisplayWrapper *display, int fps);
+  void RenderToDisplay(DisplayWrapper *display);
 
 private:
   Vector2 cameraPosition;

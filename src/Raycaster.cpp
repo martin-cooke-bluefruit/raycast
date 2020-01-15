@@ -53,7 +53,7 @@ void Raycaster::UpdateClipPlaneVector(void)
   clipPlaneRightVector.Scale(distanceToClipPlane * tan(fovInRadians / 2.0));
 }
 
-void Raycaster::RenderToDisplay(DisplayWrapper *display, int fps)
+void Raycaster::RenderToDisplay(DisplayWrapper *display)
 {
   const unsigned int displayWidth = display->GetWidth();
   const unsigned int displayHeight = display->GetHeight();
@@ -150,18 +150,9 @@ void Raycaster::RenderToDisplay(DisplayWrapper *display, int fps)
     if (perpendicularWallDistance > (mapWidth + mapHeight))
       perpendicularWallDistance = mapWidth + mapHeight;
 
-    // int lineHeight = (int)displayHeight;
-    // if (perpendicularWallDistance > 1)
-    //   lineHeight = (int)(displayHeight / perpendicularWallDistance);
     unsigned int lineHeight = (int)(displayHeight / perpendicularWallDistance);
-
-//    int textureNum = 0;
     int textureColumn = int(textureUV_U * 32.0); // assumes textures are 32px wide
 
-    // if(side == 0 && rayDirX > 0) texX = texWidth - texX - 1;
-    // if(side == 1 && rayDirY < 0) texX = texWidth - texX - 1;
-
-    // picks shades from 100 to 250 (to implement shading later)
     double shade = 1.0; // 100 + (*(worldMap + (mapY * displayWidth) + mapX) * 30);
     if (side == EastWest) 
       shade = 0.75; // darken north-south walls
@@ -190,29 +181,12 @@ void Raycaster::RenderToDisplay(DisplayWrapper *display, int fps)
 
     for (int y = startPixelY; y <= endPixelY; y++)
     {
-      // to do: change textureRow & textureStep to unsigned char; using '>> 3' can represent 1/8th steps over 32 pixels
       const unsigned char texel = *(textures[WallAtMapPosition(mapX, mapY)] + ((int)(textureRow) << 5) + textureColumn);
       textureRow += textureRowStep;
       const int offset = (y << 7) + x; // (y >> 7) assuming displayWidth = 128 !!
       //if (offset < bufferSize)
-      *(displayBuffer + offset) = texel * shade;
-      // to do: replace '* shade' with a 
-    }
-  }
-
-  if (fps > 0)
-  {
-    for (int x = 0; x < 30; x++)
-    {
-      if (x % 5 == 4)
-        *(displayBuffer + x) = 255;
-      else
-        *(displayBuffer + x) = 0;
-
-      if (x < fps)
-        *(displayBuffer + 128 + x) = 255;
-      else
-        *(displayBuffer + 128 + x) = 0;
+      *(displayBuffer + offset) = texel;// * shade;
+      // to do: replace '* shade' with a series of bit shifts
     }
   }
 }

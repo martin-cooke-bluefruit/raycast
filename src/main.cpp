@@ -4,6 +4,7 @@
 #include "Vector2.hpp"
 #include "Raycaster.hpp"
 #include "Input.hpp"
+#include "FPS.hpp"
 #include <SPI.h>
 
 #define ANALOG_PIN_1 15
@@ -42,17 +43,16 @@ int worldMap[MAP_WIDTH][MAP_HEIGHT]=
   {4, 4, 4, 4, 4, 4, 4, 4, 4, 4,13,13,13, 3, 3, 3, 3, 3, 3, 3,10,10,10, 3}
 };
 
-DisplayWrapper *display;
-
-Vector2 playerPosition;
-Vector2 playerDirection;
-
-Raycaster *raycaster;
+static DisplayWrapper *display;
+static Raycaster *raycaster;
+static FPS *fps;
 
 static uint32_t time;
 
-void UpdateGame(double deltaTime);
+static Vector2 playerPosition;
+static Vector2 playerDirection;
 
+void UpdateGame(double deltaTime);
 void WalkForward(double distance);
 void WalkBackward(double distance);
 void StrafeLeft(double distance);
@@ -70,6 +70,8 @@ void setup()
   randomSeed(rngSeed);
 
   raycaster = new Raycaster(MAP_WIDTH, MAP_HEIGHT, *worldMap);
+
+  fps = new FPS();
 
   Input_InitPins();
 
@@ -113,12 +115,11 @@ void UpdateGame(double deltaTime)
   if (Input_IsHeld(Button::Right))
     TurnRight(TURN_SPEED * deltaTime);
 
-  const int fps = 1.0 / deltaTime;
   display->Clear();
-
   raycaster->SetCameraPosition(playerPosition);
   raycaster->SetCameraDirection(playerDirection);
-  raycaster->RenderToDisplay(display, fps);
+  raycaster->RenderToDisplay(display);
+  fps->ShowFPS(display, deltaTime);
 }
 
 void WalkForward(double distance)
