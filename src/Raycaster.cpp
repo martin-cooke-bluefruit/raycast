@@ -64,6 +64,9 @@ void Raycaster::RenderToDisplay(DisplayWrapper *display)
   // zero display (i.e. black floor & ceiling)
   memset(displayBuffer, 0, bufferSize);
 
+  bool fullHeightLine = false;
+  unsigned char fullHeightLineCode;
+
   for (unsigned int x = 0; x < displayWidth; x++)
   {
     int mapX = int(cameraPosition.x);
@@ -169,24 +172,43 @@ void Raycaster::RenderToDisplay(DisplayWrapper *display)
     double textureRowStep;
     if (lineHeight < displayHeight)
     {
+      fullHeightLine = false;
       textureRow = 0;
       textureRowStep = 32.0 / (double)(endPixelY - startPixelY);
+
+      for (int y = startPixelY; y <= endPixelY; y++)
+      {
+        const unsigned char texel = *(textures[WallAtMapPosition(mapX, mapY)] + ((int)(textureRow) << 5) + textureColumn);
+        textureRow += textureRowStep;
+        const int offset = (y << 7) + x; // (y >> 7) assuming displayWidth = 128 !!
+        *(displayBuffer + offset) = texel * shade;
+      }
     }
     else
     {
-      const double amountVisible = ((double)displayHeight / (double)lineHeight);
-      textureRow = 16.0 * (1.0 - amountVisible); // 32.0 * (1.0 - amountVisible) / 2.0;
-      textureRowStep = amountVisible / 2.0; //(32.0 * amountVisible) / 64.0;
-    }
+      if (fullHeightLine == false)
+      {
+        fullHeightLine = true;
+        fullHeightLineCode = x % 2;
+      }
+      if (x % 2 == fullHeightLineCode)
+      {
+        const double amountVisible = ((double)displayHeight / (double)lineHeight);
+        textureRow = 16.0 * (1.0 - amountVisible);
+        textureRowStep = amountVisible / 2.0;
 
-    for (int y = startPixelY; y <= endPixelY; y++)
-    {
-      const unsigned char texel = *(textures[WallAtMapPosition(mapX, mapY)] + ((int)(textureRow) << 5) + textureColumn);
-      textureRow += textureRowStep;
-      const int offset = (y << 7) + x; // (y >> 7) assuming displayWidth = 128 !!
-      //if (offset < bufferSize)
-      *(displayBuffer + offset) = texel;// * shade;
-      // to do: replace '* shade' with a series of bit shifts
+        for (int y = startPixelY; y <= endPixelY; y++)
+        {
+          unsigned char texel = *(textures[WallAtMapPosition(mapX, mapY)] + ((int)(textureRow) << 5) + textureColumn);
+          textureRow += textureRowStep;
+          const int offset = (y << 7) + x; // (y >> 7) assuming displayWidth = 128 !!
+          if (side == EastWest)
+            texel = (texel >> 2) + (texel >> 1);
+          *(displayBuffer + offset) = texel;
+          if (x < 127)
+            *(displayBuffer + offset + 1) = texel;
+        }
+      }
     }
   }
 }
