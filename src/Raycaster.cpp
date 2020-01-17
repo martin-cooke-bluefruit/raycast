@@ -158,7 +158,7 @@ void Raycaster::RenderToDisplay(DisplayWrapper *display)
 
     double shade = 1.0; // 100 + (*(worldMap + (mapY * displayWidth) + mapX) * 30);
     if (side == EastWest) 
-      shade = 0.75; // darken north-south walls
+      shade = 0.75; // darken east-west walls
 
     shade /= (perpendicularWallDistance < 3.0) ? 1.0 : perpendicularWallDistance * 0.333;
 
