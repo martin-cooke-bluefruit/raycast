@@ -5,6 +5,7 @@
 #include "Raycaster.hpp"
 #include "Input.hpp"
 #include "FPS.hpp"
+#include "MelodyPlayer.hpp"
 #include <SPI.h>
 
 #define ANALOG_PIN_1 15
@@ -83,6 +84,26 @@ void setup()
   playerDirection.x = 1;
   playerDirection.y = 0;
   playerDirection.Normalise();
+
+  int testMelody[] =
+  {
+    440, 200, 0, 66,
+    440, 100, 0, 33,
+    440, 100, 0, 33,
+    330, 100, 0, 33,
+    440, 400
+  };
+
+  // // rumble / noise
+  // int testMelody[1000];
+  // for (int i = 0; i < 1000; i += 2)
+  // {
+  //   testMelody[i] = random(100, 200);
+  //   testMelody[i + 1] = 2;
+  // }
+
+  MelodyPlayer_SetPassiveBuzzerPin(22);
+  MelodyPlayer_SetMelody(testMelody, sizeof(testMelody) / sizeof(int));
 }
 
 void loop()
@@ -103,9 +124,9 @@ void UpdateGame(double deltaTime)
   if (Input_IsHeld(Button::Down))
     WalkBackward(WALK_SPEED * deltaTime);
   if (Input_WasPressed(Button::A))
-    tone(22, 440, 250);
-  if (Input_WasPressed(Button::B))
-    tone(22, 330, 250);
+    MelodyPlayer_Play();
+  // if (Input_WasPressed(Button::B))
+  //   tone(22, 330, 250);
   // if (Input_IsHeld(Button::A))
   //   StrafeLeft(WALK_SPEED * deltaTime);
   // if (Input_IsHeld(Button::B))
